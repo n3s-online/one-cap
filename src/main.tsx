@@ -118,6 +118,14 @@ const App: React.FC = () => {
       {/* Feedback Button */}
       <FeedbackButton />
 
+      {/* Cap name text */}
+      {!isLoading && selectedCap && (
+        <div className="cap-title-text" style={{ color: selectedCap.color }}>
+          right now i am wearing my{" "}
+          <span className="cap-name-highlight">{selectedCap.name}</span> cap
+        </div>
+      )}
+
       <div className="cap-display">
         {!isLoading && selectedCap && (
           <BaseballCap
