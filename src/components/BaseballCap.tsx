@@ -36,6 +36,10 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
   // Add a state to track if the model is loaded
   const [isModelLoaded, setIsModelLoaded] = useState(false);
   const [isFontLoaded, setIsFontLoaded] = useState(false);
+  // Add a ref to store the current background color animation
+  const colorAnimationRef = useRef<{ id: number } | null>(null);
+  // Add a ref to store the current cap color animation
+  const capColorAnimationRef = useRef<{ id: number } | null>(null);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -206,7 +210,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
       if (cap) cap.add(textMesh);
     };
 
-    // Set cap color
+    // Set cap color with animation
     const setCapColor = (color: string) => {
       if (!cap) {
         console.log("Cap not loaded yet");
@@ -234,21 +238,139 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
           .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
       };
 
-      // Apply complementary color to scene background
+      // Get complementary color
       const complementaryColor = calculateComplementaryColor(color);
-      scene.background = new THREE.Color(complementaryColor);
+      const targetColor = new THREE.Color(complementaryColor);
+
+      // Get current background color
+      const currentColor = scene.background
+        ? (scene.background as THREE.Color).clone()
+        : new THREE.Color("#000000");
+
+      // Cancel any ongoing animation
+      if (colorAnimationRef.current) {
+        cancelAnimationFrame(colorAnimationRef.current.id);
+        colorAnimationRef.current = null;
+      }
+
+      // Animation duration in milliseconds
+      const duration = 800;
+      const startTime = performance.now();
+
+      // Animation function
+      const animateBackgroundColor = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease function (cubic ease-out)
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+        // Interpolate color
+        const r =
+          currentColor.r + (targetColor.r - currentColor.r) * easeProgress;
+        const g =
+          currentColor.g + (targetColor.g - currentColor.g) * easeProgress;
+        const b =
+          currentColor.b + (targetColor.b - currentColor.b) * easeProgress;
+
+        // Apply interpolated color
+        scene.background = new THREE.Color(r, g, b);
+
+        // Continue animation if not complete
+        if (progress < 1) {
+          colorAnimationRef.current = {
+            id: requestAnimationFrame(animateBackgroundColor),
+          };
+        } else {
+          colorAnimationRef.current = null;
+        }
+      };
+
+      // Start animation
+      colorAnimationRef.current = {
+        id: requestAnimationFrame(animateBackgroundColor),
+      };
+
+      // Animate cap color change
+      const targetCapColor = new THREE.Color(color);
+
+      // Cancel any ongoing cap color animation
+      if (capColorAnimationRef.current) {
+        cancelAnimationFrame(capColorAnimationRef.current.id);
+        capColorAnimationRef.current = null;
+      }
+
+      // Store current materials and their colors
+      const meshes: { mesh: THREE.Mesh; currentColor: THREE.Color }[] = [];
 
       cap.traverse((child) => {
         if ((child as THREE.Mesh).isMesh && child !== textMesh) {
-          // Create a new material with the desired color
-          const newMaterial = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(color),
-            roughness: 0.7,
-            metalness: 0.1,
-          });
-          (child as THREE.Mesh).material = newMaterial;
+          const mesh = child as THREE.Mesh;
+          const material = mesh.material as THREE.MeshStandardMaterial;
+
+          // Store current color if it exists
+          if (material && material.color) {
+            meshes.push({
+              mesh,
+              currentColor: material.color.clone(),
+            });
+          }
         }
       });
+
+      // Animation function for cap color
+      const animateCapColor = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease function (cubic ease-out)
+        const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+        // Update each mesh material color
+        meshes.forEach(({ mesh, currentColor }) => {
+          const material = mesh.material as THREE.MeshStandardMaterial;
+
+          // Interpolate color
+          const r =
+            currentColor.r + (targetCapColor.r - currentColor.r) * easeProgress;
+          const g =
+            currentColor.g + (targetCapColor.g - currentColor.g) * easeProgress;
+          const b =
+            currentColor.b + (targetCapColor.b - currentColor.b) * easeProgress;
+
+          // Apply interpolated color
+          material.color.setRGB(r, g, b);
+        });
+
+        // Continue animation if not complete
+        if (progress < 1) {
+          capColorAnimationRef.current = {
+            id: requestAnimationFrame(animateCapColor),
+          };
+        } else {
+          // Set final materials when animation completes
+          if (cap) {
+            cap.traverse((child) => {
+              if ((child as THREE.Mesh).isMesh && child !== textMesh) {
+                // Create a new material with the desired color
+                const newMaterial = new THREE.MeshStandardMaterial({
+                  color: targetCapColor,
+                  roughness: 0.7,
+                  metalness: 0.1,
+                });
+                (child as THREE.Mesh).material = newMaterial;
+              }
+            });
+          }
+
+          capColorAnimationRef.current = null;
+        }
+      };
+
+      // Start cap color animation
+      capColorAnimationRef.current = {
+        id: requestAnimationFrame(animateCapColor),
+      };
     };
 
     // Animation loop
@@ -279,12 +401,32 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
 
     // Cleanup function
     const cleanup = () => {
-      window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationFrameId);
-      if (containerRef.current && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement);
+      // Cancel any ongoing color animation
+      if (colorAnimationRef.current) {
+        cancelAnimationFrame(colorAnimationRef.current.id);
+        colorAnimationRef.current = null;
       }
+
+      // Cancel any ongoing cap color animation
+      if (capColorAnimationRef.current) {
+        cancelAnimationFrame(capColorAnimationRef.current.id);
+        capColorAnimationRef.current = null;
+      }
+
+      window.removeEventListener("resize", handleResize);
+      if (controls) controls.dispose();
       renderer.dispose();
+
+      // Remove all event listeners
+      if (containerRef.current) {
+        const clone = containerRef.current.cloneNode(true);
+        if (containerRef.current.parentNode) {
+          containerRef.current.parentNode.replaceChild(
+            clone,
+            containerRef.current
+          );
+        }
+      }
     };
 
     // Store the instance for external control
