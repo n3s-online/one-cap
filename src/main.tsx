@@ -3,6 +3,10 @@ import { createRoot } from "react-dom/client";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import "./style.css";
 import BaseballCap from "./components/BaseballCap";
+import DeleteCapButton from "./components/DeleteCapButton";
+import DeleteCapModal from "./components/DeleteCapModal";
+import AddCapButton from "./components/AddCapButton";
+import AddCapForm from "./components/AddCapForm";
 import {
   capsAtom,
   getAllCapsAtom,
@@ -21,12 +25,6 @@ const App: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null
   );
-  const [newCap, setNewCap] = useState({
-    name: "",
-    letter: "",
-    color: "#000000",
-    letterColor: "#ffffff",
-  });
 
   // Check if there's only one cap left
   const isLastCap = Object.keys(capsState.caps).length <= 1;
@@ -42,36 +40,27 @@ const App: React.FC = () => {
     setShowForm(true);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleFormSubmit = (capData: {
+    name: string;
+    letter: string;
+    color: string;
+    letterColor: string;
+  }) => {
     // Generate a unique ID
     const newId = Date.now().toString();
 
     // Add the new cap
     addCap({
       id: newId,
-      ...newCap,
+      ...capData,
     });
 
-    // Reset form and hide it
-    setNewCap({
-      name: "",
-      letter: "",
-      color: "#000000",
-      letterColor: "#ffffff",
-    });
+    // Hide the form
     setShowForm(false);
   };
 
   const handleFormCancel = () => {
     setShowForm(false);
-    setNewCap({
-      name: "",
-      letter: "",
-      color: "#000000",
-      letterColor: "#ffffff",
-    });
   };
 
   const handleDeleteClick = (e: React.MouseEvent, capId: string) => {
@@ -137,119 +126,31 @@ const App: React.FC = () => {
             <span className="cap-name">{cap.name}</span>
             {/* Only show delete button on selected cap and when there's more than one cap */}
             {cap.id === capsState.selectedCapId && !isLastCap && (
-              <button
-                className="delete-button"
-                onClick={(e) => handleDeleteClick(e, cap.id)}
-                aria-label={`Delete ${cap.name}`}
-              >
-                ×
-              </button>
+              <DeleteCapButton
+                capId={cap.id}
+                onDeleteClick={handleDeleteClick}
+              />
             )}
           </button>
         ))}
 
         {/* Add new cap button */}
-        <button
-          className="cap-button add-cap-button"
-          onClick={handleAddCapClick}
-        >
-          <span className="cap-letter">+</span>
-          <span className="cap-name">Add Cap</span>
-        </button>
+        <AddCapButton onClick={handleAddCapClick} />
       </div>
 
       {/* New Cap Form */}
-      {showForm && (
-        <div className="cap-form-overlay">
-          <div className="cap-form-container">
-            <h2>Add New Cap</h2>
-            <form onSubmit={handleFormSubmit}>
-              <div className="form-group">
-                <label htmlFor="capName">Cap Name:</label>
-                <input
-                  type="text"
-                  id="capName"
-                  value={newCap.name}
-                  onChange={(e) =>
-                    setNewCap({ ...newCap, name: e.target.value })
-                  }
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="capLetter">Letter:</label>
-                <input
-                  type="text"
-                  id="capLetter"
-                  value={newCap.letter}
-                  onChange={(e) =>
-                    setNewCap({
-                      ...newCap,
-                      letter: e.target.value.charAt(0).toUpperCase(),
-                    })
-                  }
-                  maxLength={1}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="capColor">Cap Color:</label>
-                <input
-                  type="color"
-                  id="capColor"
-                  value={newCap.color}
-                  onChange={(e) =>
-                    setNewCap({ ...newCap, color: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="letterColor">Letter Color:</label>
-                <input
-                  type="color"
-                  id="letterColor"
-                  value={newCap.letterColor}
-                  onChange={(e) =>
-                    setNewCap({ ...newCap, letterColor: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="form-actions">
-                <button type="button" onClick={handleFormCancel}>
-                  Cancel
-                </button>
-                <button type="submit">Add Cap</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddCapForm
+        isOpen={showForm}
+        onCancel={handleFormCancel}
+        onSubmit={handleFormSubmit}
+      />
 
       {/* Delete Confirmation Dialog */}
-      {showDeleteConfirm && (
-        <div className="cap-form-overlay">
-          <div className="cap-form-container delete-confirm">
-            <h2>Confirm Deletion</h2>
-            <p>Are you sure you want to delete this cap?</p>
-            <div className="form-actions">
-              <button type="button" onClick={handleDeleteCancel}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="delete-confirm-button"
-                onClick={handleDeleteConfirm}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteCapModal
+        isOpen={showDeleteConfirm !== null}
+        onCancel={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 };
