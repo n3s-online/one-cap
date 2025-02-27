@@ -41,10 +41,31 @@ canvas {
   padding: 15px;
   background-color: rgba(0, 0, 0, 0.7);
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
   gap: 10px;
   z-index: 10;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: rgba(255, 255, 255, 0.5) rgba(0, 0, 0, 0.2); /* For Firefox */
+  box-sizing: border-box; /* Ensure padding is included in width calculation */
+}
+
+/* Customize scrollbar for webkit browsers */
+.caps-grid::-webkit-scrollbar {
+  height: 6px;
+}
+
+.caps-grid::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.caps-grid::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
 }
 
 .cap-button {
@@ -52,7 +73,7 @@ canvas {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 80px;
+  min-width: 80px;
   height: 80px;
   border-radius: 10px;
   border: none;
@@ -62,6 +83,7 @@ canvas {
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .cap-button:hover {
@@ -87,4 +109,106 @@ canvas {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Add Cap Button Styles */
+.add-cap-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+}
+
+.add-cap-button .cap-letter {
+  font-size: 32px;
+  margin-bottom: 0;
+}
+
+.add-cap-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Form Overlay Styles */
+.cap-form-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.cap-form-container {
+  background-color: white;
+  border-radius: 10px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+}
+
+.cap-form-container h2 {
+  margin-top: 0;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+}
+
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.form-group input[type="color"] {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.form-actions button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.form-actions button[type="button"] {
+  background-color: #ccc;
+  color: #333;
+}
+
+.form-actions button[type="submit"] {
+  background-color: #4caf50;
+  color: white;
+}
+
+.form-actions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
