@@ -47,7 +47,6 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     const renderer = new THREE.WebGLRenderer({ antialias: true });
 
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0xf0f0f0);
     renderer.shadowMap.enabled = true;
     containerRef.current.appendChild(renderer.domElement);
 
@@ -202,6 +201,31 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
         console.log("Cap not loaded yet");
         return;
       }
+
+      // Calculate complementary color for the background
+      const calculateComplementaryColor = (hexColor: string): string => {
+        // Remove # if present
+        const hex = hexColor.replace("#", "");
+
+        // Convert to RGB
+        let r = parseInt(hex.substring(0, 2), 16);
+        let g = parseInt(hex.substring(2, 4), 16);
+        let b = parseInt(hex.substring(4, 6), 16);
+
+        // Calculate complementary color (255 - rgb values)
+        r = 255 - r;
+        g = 255 - g;
+        b = 255 - b;
+
+        // Convert back to hex
+        return `#${r.toString(16).padStart(2, "0")}${g
+          .toString(16)
+          .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+      };
+
+      // Apply complementary color to scene background
+      const complementaryColor = calculateComplementaryColor(color);
+      scene.background = new THREE.Color(complementaryColor);
 
       cap.traverse((child) => {
         if ((child as THREE.Mesh).isMesh && child !== textMesh) {

@@ -6,7 +6,7 @@ import BaseballCap from "./components/BaseballCap";
 const App: React.FC = () => {
   return (
     <div className="app-fullscreen">
-      <BaseballCap color="blue" letter="A" letterColor="white" />
+      <BaseballCap color="#0066ff" letter="A" letterColor="white" />
     </div>
   );
 };
