@@ -8,6 +8,7 @@ import {
   getAllCapsAtom,
   getSelectedCapAtom,
   addCapAtom,
+  removeCapAtom,
 } from "./atoms/capsAtoms";
 
 const App: React.FC = () => {
@@ -15,13 +16,20 @@ const App: React.FC = () => {
   const allCaps = useAtomValue(getAllCapsAtom);
   const [capsState, setCapsState] = useAtom(capsAtom);
   const addCap = useSetAtom(addCapAtom);
+  const removeCap = useSetAtom(removeCapAtom);
   const [showForm, setShowForm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null
+  );
   const [newCap, setNewCap] = useState({
     name: "",
     letter: "",
     color: "#000000",
     letterColor: "#ffffff",
   });
+
+  // Check if there's only one cap left
+  const isLastCap = Object.keys(capsState.caps).length <= 1;
 
   const handleCapSelect = (capId: string) => {
     setCapsState({
@@ -66,6 +74,43 @@ const App: React.FC = () => {
     });
   };
 
+  const handleDeleteClick = (e: React.MouseEvent, capId: string) => {
+    e.stopPropagation(); // Prevent cap selection when clicking delete
+    setShowDeleteConfirm(capId);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (showDeleteConfirm) {
+      // If this is the last cap, don't allow deletion
+      if (isLastCap) {
+        alert("Cannot delete the last cap. At least one cap must remain.");
+        setShowDeleteConfirm(null);
+        return;
+      }
+
+      // If deleting the currently selected cap, select another one first
+      if (showDeleteConfirm === capsState.selectedCapId) {
+        const remainingCaps = Object.keys(capsState.caps).filter(
+          (id) => id !== showDeleteConfirm
+        );
+        if (remainingCaps.length > 0) {
+          setCapsState({
+            ...capsState,
+            selectedCapId: remainingCaps[0],
+          });
+        }
+      }
+
+      // Remove the cap
+      removeCap(showDeleteConfirm);
+      setShowDeleteConfirm(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(null);
+  };
+
   return (
     <div className="app-container">
       <div className="cap-display">
@@ -90,6 +135,16 @@ const App: React.FC = () => {
               {cap.letter}
             </span>
             <span className="cap-name">{cap.name}</span>
+            {/* Only show delete button on selected cap and when there's more than one cap */}
+            {cap.id === capsState.selectedCapId && !isLastCap && (
+              <button
+                className="delete-button"
+                onClick={(e) => handleDeleteClick(e, cap.id)}
+                aria-label={`Delete ${cap.name}`}
+              >
+                ×
+              </button>
+            )}
           </button>
         ))}
 
@@ -170,6 +225,28 @@ const App: React.FC = () => {
                 <button type="submit">Add Cap</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="cap-form-overlay">
+          <div className="cap-form-container delete-confirm">
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete this cap?</p>
+            <div className="form-actions">
+              <button type="button" onClick={handleDeleteCancel}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="delete-confirm-button"
+                onClick={handleDeleteConfirm}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         </div>
       )}
