@@ -60,7 +60,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     scene.add(directionalLight);
 
     // Camera setup
-    camera.position.set(0, 0, 1);
+    camera.position.set(0, 0, 0.75);
 
     // Initialize OrbitControls for user interaction
     const controls = new OrbitControls(camera, renderer.domElement);
