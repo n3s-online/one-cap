@@ -33,6 +33,10 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     cleanup: () => void;
   } | null>(null);
 
+  // Add a state to track if the model is loaded
+  const [isModelLoaded, setIsModelLoaded] = useState(false);
+  const [isFontLoaded, setIsFontLoaded] = useState(false);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -84,6 +88,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
       (loadedFont) => {
         font = loadedFont;
         console.log("Font loaded successfully");
+        setIsFontLoaded(true);
         // If letter is already specified and cap is loaded, create the text
         if (letter && cap) createText(letter, letterColor);
       },
@@ -135,6 +140,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
 
           scene.add(cap);
           console.log("Model loaded successfully");
+          setIsModelLoaded(true);
 
           // Apply initial color and text if provided
           if (color) setCapColor(color);
@@ -153,13 +159,11 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     const createText = (letter: string, color: string) => {
       if (!cap) {
         console.log("Cap not loaded yet, waiting...");
-        setTimeout(() => createText(letter, color), 100);
         return;
       }
 
       if (!font) {
         console.log("Font not loaded yet, waiting...");
-        setTimeout(() => createText(letter, color), 100);
         return;
       }
 
@@ -303,16 +307,16 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
 
   // Apply prop changes
   useEffect(() => {
-    if (capInstance && color) {
+    if (capInstance && color && isModelLoaded) {
       capInstance.setCapColor(color);
     }
-  }, [capInstance, color]);
+  }, [capInstance, color, isModelLoaded]);
 
   useEffect(() => {
-    if (capInstance && letter) {
+    if (capInstance && letter && isModelLoaded && isFontLoaded) {
       capInstance.createText(letter, letterColor);
     }
-  }, [capInstance, letter, letterColor]);
+  }, [capInstance, letter, letterColor, isModelLoaded, isFontLoaded]);
 
   return (
     <div

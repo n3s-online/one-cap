@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import "./style.css";
@@ -25,9 +25,21 @@ const App: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null
   );
+  // Add a loading state to handle initial data loading
+  const [isLoading, setIsLoading] = useState(true);
 
   // Check if there's only one cap left
   const isLastCap = Object.keys(capsState.caps).length <= 1;
+
+  // Effect to handle initial loading
+  useEffect(() => {
+    // Set loading to false after a short delay to ensure localStorage data is loaded
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCapSelect = (capId: string) => {
     setCapsState({
@@ -103,11 +115,13 @@ const App: React.FC = () => {
   return (
     <div className="app-container">
       <div className="cap-display">
-        <BaseballCap
-          color={selectedCap.color}
-          letter={selectedCap.letter}
-          letterColor={selectedCap.letterColor}
-        />
+        {!isLoading && selectedCap && (
+          <BaseballCap
+            color={selectedCap.color}
+            letter={selectedCap.letter}
+            letterColor={selectedCap.letterColor}
+          />
+        )}
       </div>
 
       <div className="caps-grid">
