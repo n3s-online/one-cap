@@ -150,6 +150,17 @@ const App: React.FC = () => {
 
         {/* Add new cap button */}
         <AddCapButton onClick={handleAddCapClick} />
+
+        {/* More Projects button styled like a cap button */}
+        <a
+          href="https://willness.dev"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cap-button more-projects-cap"
+        >
+          <span className="cap-letter">👨‍💻</span>
+          <span className="cap-name">More Projects</span>
+        </a>
       </div>
 
       {/* New Cap Form */}

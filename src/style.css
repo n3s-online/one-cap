@@ -248,5 +248,24 @@ canvas {
 
 .form-actions button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* More Projects Cap Button Styles */
+.more-projects-cap {
+  background-color: #4285f4;
+  text-decoration: none;
+}
+
+.more-projects-cap:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Remove the previous More Projects Button Styles */
+.more-projects-container {
+  display: none;
+}
+
+.more-projects-button {
+  display: none;
 }
