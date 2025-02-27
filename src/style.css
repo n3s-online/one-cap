@@ -8,6 +8,7 @@ body {
 
 canvas {
   display: block;
+  pointer-events: none; /* Disable all pointer events on the canvas */
 }
 
 /* New fullscreen app container */

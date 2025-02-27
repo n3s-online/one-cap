@@ -24,7 +24,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
     renderer: THREE.WebGLRenderer;
-    controls: OrbitControls;
+    controls: OrbitControls | null;
     cap: THREE.Group | null;
     textMesh: THREE.Mesh | null;
     animate: () => void;
@@ -59,11 +59,11 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     directionalLight.castShadow = true;
     scene.add(directionalLight);
 
-    // Camera and controls setup
+    // Camera setup - removed controls
     camera.position.set(0, 0, 2);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
+
+    // Set to null to disable user interaction
+    const controls = null;
 
     // Cap model and text mesh
     let cap: THREE.Group | null = null;
@@ -247,7 +247,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
       if (cap) {
         cap.rotation.y += 0.015;
       }
-      controls.update();
+      // No controls to update
       renderer.render(scene, camera);
     };
 
