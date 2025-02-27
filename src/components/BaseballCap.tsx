@@ -62,8 +62,15 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     // Camera setup
     camera.position.set(0, 0, 1);
 
-    // Set to null to disable user interaction
-    const controls = null;
+    // Initialize OrbitControls for user interaction
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+    controls.autoRotate = true;
+    controls.minDistance = 0.5;
+    controls.maxDistance = 2;
+    controls.update();
 
     // Cap model and text mesh
     let cap: THREE.Group | null = null;
@@ -244,10 +251,12 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     let animationFrameId: number;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      if (cap) {
+      if (cap && !controls.autoRotate) {
+        // Only auto-rotate if controls.autoRotate is false
         cap.rotation.y += 0.015;
       }
-      // No controls to update
+      // Update controls
+      controls.update();
       renderer.render(scene, camera);
     };
 
