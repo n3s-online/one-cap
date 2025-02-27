@@ -40,16 +40,13 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
-      containerRef.current.clientWidth / containerRef.current.clientHeight,
+      window.innerWidth / window.innerHeight,
       0.1,
       1000
     );
     const renderer = new THREE.WebGLRenderer({ antialias: true });
 
-    renderer.setSize(
-      containerRef.current.clientWidth,
-      containerRef.current.clientHeight
-    );
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0xf0f0f0);
     renderer.shadowMap.enabled = true;
     containerRef.current.appendChild(renderer.domElement);
@@ -72,7 +69,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     // Cap model and text mesh
     let cap: THREE.Group | null = null;
     let textMesh: THREE.Mesh | null = null;
-    let font: THREE.Font | null = null;
+    let font: any = null;
 
     // Load font for 3D text
     const fontLoader = new FontLoader();
@@ -224,7 +221,7 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       if (cap) {
-        cap.rotation.y += 0.005;
+        cap.rotation.y += 0.015;
       }
       controls.update();
       renderer.render(scene, camera);
@@ -232,15 +229,9 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
 
     // Handle window resize
     const handleResize = () => {
-      if (!containerRef.current) return;
-
-      camera.aspect =
-        containerRef.current.clientWidth / containerRef.current.clientHeight;
+      camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(
-        containerRef.current.clientWidth,
-        containerRef.current.clientHeight
-      );
+      renderer.setSize(window.innerWidth, window.innerHeight);
     };
 
     window.addEventListener("resize", handleResize);
@@ -296,7 +287,9 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
       style={{
         width: "100%",
         height: "100%",
-        minHeight: "400px",
+        position: "absolute",
+        top: 0,
+        left: 0,
       }}
     />
   );
