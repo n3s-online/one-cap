@@ -1,11 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-interface CapFormData {
-  name: string;
-  letter: string;
-  color: string;
-  letterColor: string;
-}
+// Define the validation schema with zod
+const capFormSchema = z.object({
+  name: z
+    .string()
+    .min(1, "Cap name is required")
+    .max(64, "Cap name must be less than 64 characters"),
+  letter: z.string().length(1, "Letter must be exactly 1 character"),
+  color: z.string().min(1, "Cap color is required"),
+  letterColor: z.string().min(1, "Letter color is required"),
+});
+
+// Infer the type from the schema
+type CapFormData = z.infer<typeof capFormSchema>;
 
 interface AddCapFormProps {
   isOpen: boolean;
@@ -25,31 +35,47 @@ const AddCapForm: React.FC<AddCapFormProps> = ({
     letterColor: "#ffffff",
   },
 }) => {
-  const [formData, setFormData] = useState<CapFormData>(initialData);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset,
+  } = useForm<CapFormData>({
+    resolver: zodResolver(capFormSchema),
+    defaultValues: initialData,
+  });
+
+  // Watch the letter field to transform it to uppercase
+  const letterValue = watch("letter");
+  React.useEffect(() => {
+    if (letterValue && letterValue.length > 0) {
+      const uppercaseLetter = letterValue.charAt(0).toUpperCase();
+      if (uppercaseLetter !== letterValue) {
+        setValue("letter", uppercaseLetter);
+      }
+    }
+  }, [letterValue, setValue]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
+  const onFormSubmit = (data: CapFormData) => {
+    onSubmit(data);
+    reset();
   };
 
   return (
     <div className="cap-form-overlay">
       <div className="cap-form-container">
         <h2>Add New Cap</h2>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onFormSubmit)}>
           <div className="form-group">
             <label htmlFor="capName">Cap Name:</label>
-            <input
-              type="text"
-              id="capName"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              required
-            />
+            <input type="text" id="capName" {...register("name")} />
+            {errors.name && (
+              <p className="error-message">{errors.name.message}</p>
+            )}
           </div>
 
           <div className="form-group">
@@ -57,40 +83,28 @@ const AddCapForm: React.FC<AddCapFormProps> = ({
             <input
               type="text"
               id="capLetter"
-              value={formData.letter}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  letter: e.target.value.charAt(0).toUpperCase(),
-                })
-              }
               maxLength={1}
-              required
+              {...register("letter")}
             />
+            {errors.letter && (
+              <p className="error-message">{errors.letter.message}</p>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="capColor">Cap Color:</label>
-            <input
-              type="color"
-              id="capColor"
-              value={formData.color}
-              onChange={(e) =>
-                setFormData({ ...formData, color: e.target.value })
-              }
-            />
+            <input type="color" id="capColor" {...register("color")} />
+            {errors.color && (
+              <p className="error-message">{errors.color.message}</p>
+            )}
           </div>
 
           <div className="form-group">
             <label htmlFor="letterColor">Letter Color:</label>
-            <input
-              type="color"
-              id="letterColor"
-              value={formData.letterColor}
-              onChange={(e) =>
-                setFormData({ ...formData, letterColor: e.target.value })
-              }
-            />
+            <input type="color" id="letterColor" {...register("letterColor")} />
+            {errors.letterColor && (
+              <p className="error-message">{errors.letterColor.message}</p>
+            )}
           </div>
 
           <div className="form-actions">
