@@ -72,7 +72,12 @@ const AddCapForm: React.FC<AddCapFormProps> = ({
         <form onSubmit={handleSubmit(onFormSubmit)}>
           <div className="form-group">
             <label htmlFor="capName">Cap Name:</label>
-            <input type="text" id="capName" {...register("name")} />
+            <input
+              type="text"
+              id="capName"
+              {...register("name")}
+              autoComplete="off"
+            />
             {errors.name && (
               <p className="error-message">{errors.name.message}</p>
             )}
@@ -85,6 +90,7 @@ const AddCapForm: React.FC<AddCapFormProps> = ({
               id="capLetter"
               maxLength={1}
               {...register("letter")}
+              autoComplete="off"
             />
             {errors.letter && (
               <p className="error-message">{errors.letter.message}</p>
