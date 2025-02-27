@@ -7,6 +7,7 @@ import DeleteCapButton from "./components/DeleteCapButton";
 import DeleteCapModal from "./components/DeleteCapModal";
 import AddCapButton from "./components/AddCapButton";
 import AddCapForm from "./components/AddCapForm";
+import FeedbackButton from "./components/FeedbackButton";
 import {
   capsAtom,
   getAllCapsAtom,
@@ -114,6 +115,9 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Feedback Button */}
+      <FeedbackButton />
+
       <div className="cap-display">
         {!isLoading && selectedCap && (
           <BaseballCap
