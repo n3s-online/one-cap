@@ -59,8 +59,8 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
     directionalLight.castShadow = true;
     scene.add(directionalLight);
 
-    // Camera setup - removed controls
-    camera.position.set(0, 0, 2);
+    // Camera setup
+    camera.position.set(0, 0, 1);
 
     // Set to null to disable user interaction
     const controls = null;
