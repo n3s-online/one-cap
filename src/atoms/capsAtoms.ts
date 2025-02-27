@@ -21,15 +21,15 @@ const initialState: CapsState = {
       id: "1",
       name: "Developer",
       letter: "D",
-      color: "#abc123",
+      color: "#2E4A9E",
       letterColor: "white",
     },
     "2": {
       id: "2",
       name: "Marketer",
       letter: "M",
-      color: "#def456",
-      letterColor: "black",
+      color: "#D6811F",
+      letterColor: "white",
     },
   },
 };
