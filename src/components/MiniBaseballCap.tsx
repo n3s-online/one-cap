@@ -64,20 +64,11 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
       }
 
       // Request Picture-in-Picture
-      if (videoRef.current.requestPictureInPicture.length === 0) {
-        // No arguments supported
-        await videoRef.current.requestPictureInPicture();
-      } else {
-        // Arguments supported
-        await videoRef.current.requestPictureInPicture({
-          width: pipWidth,
-          height: pipHeight,
-        });
-      }
+      await videoRef.current.requestPictureInPicture();
     } catch (error) {
       console.error("Failed to enter Picture-in-Picture mode:", error);
     }
-  }, [pipWidth, pipHeight]); // Dependencies for useCallback
+  }, [pipWidth, pipHeight]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -249,7 +240,7 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
       textGeometry.translate(-textWidth / 2, 0, 0);
 
       const nameMaterial = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(0xffffff),
+        color: new THREE.Color(letterColor),
         transparent: true,
         opacity: 0.7,
         metalness: 0.1,
@@ -263,16 +254,14 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
       nameMesh.position.set(0, 0.2, -0.05);
 
       scene.add(nameMesh);
-
-      updateNameTextColor(color);
     };
 
-    const updateNameTextColor = (capColor: string) => {
+    const updateNameTextColor = (textColor: string) => {
       if (!nameTextMeshRef.current) return;
 
       const material = nameTextMeshRef.current
         .material as THREE.MeshStandardMaterial;
-      material.color = new THREE.Color(capColor);
+      material.color = new THREE.Color(textColor);
       material.opacity = 0.7;
     };
 
@@ -333,7 +322,7 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
 
     window.miniCapFunctions = {
       setCapColor,
-      createText,
+      createText: (letter: string) => createText(letter, letterColor),
       createNameText,
     };
 
@@ -398,7 +387,7 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
 
   useEffect(() => {
     if (isModelLoaded && isFontLoaded && window.miniCapFunctions) {
-      window.miniCapFunctions.createText(letter, letterColor);
+      window.miniCapFunctions.createText(letter);
     }
   }, [letter, letterColor, isModelLoaded, isFontLoaded]);
 
@@ -406,7 +395,7 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
     if (isFontLoaded && window.miniCapFunctions) {
       window.miniCapFunctions.createNameText(name);
     }
-  }, [name, isFontLoaded]);
+  }, [name, letterColor, isFontLoaded]); // Add letterColor as a dependency
 
   return (
     <>
