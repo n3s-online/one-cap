@@ -20,6 +20,8 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
   letterColor = "#ff0000",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const [capInstance, setCapInstance] = useState<{
     scene: THREE.Scene;
     camera: THREE.PerspectiveCamera;
@@ -40,6 +42,69 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
   const colorAnimationRef = useRef<{ id: number } | null>(null);
   // Add a ref to store the current cap color animation
   const capColorAnimationRef = useRef<{ id: number } | null>(null);
+  // Add state to track if PiP is active
+  const [isPipActive, setIsPipActive] = useState(false);
+
+  // Handle visibility change to activate/deactivate PiP
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (!videoRef.current || !capInstance?.renderer) return;
+
+      if (document.hidden && !isPipActive) {
+        try {
+          // Start PiP when tab becomes hidden
+          if (document.pictureInPictureEnabled) {
+            // Make sure we have a media stream from the canvas
+            if (!mediaStreamRef.current) {
+              const canvas = capInstance.renderer.domElement;
+              mediaStreamRef.current = canvas.captureStream(30); // 30 FPS
+              videoRef.current.srcObject = mediaStreamRef.current;
+              await videoRef.current.play();
+            }
+
+            // Request Picture-in-Picture
+            if (!document.pictureInPictureElement) {
+              await videoRef.current.requestPictureInPicture();
+              setIsPipActive(true);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to enter Picture-in-Picture mode:", error);
+        }
+      } else if (!document.hidden && isPipActive) {
+        try {
+          // Exit PiP when tab becomes visible again
+          if (document.pictureInPictureElement) {
+            await document.exitPictureInPicture();
+          }
+          setIsPipActive(false);
+        } catch (error) {
+          console.error("Failed to exit Picture-in-Picture mode:", error);
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isPipActive, capInstance]);
+
+  // Clean up PiP when component unmounts
+  useEffect(() => {
+    return () => {
+      if (document.pictureInPictureElement && videoRef.current) {
+        document.exitPictureInPicture().catch((err) => {
+          console.error("Error exiting PiP on unmount:", err);
+        });
+      }
+
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -413,6 +478,16 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
         capColorAnimationRef.current = null;
       }
 
+      // Stop media stream if it exists
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+
+      // Exit PiP if active
+      if (document.pictureInPictureElement) {
+        document.exitPictureInPicture().catch(console.error);
+      }
+
       window.removeEventListener("resize", handleResize);
       if (controls) controls.dispose();
       renderer.dispose();
@@ -461,16 +536,31 @@ const BaseballCap: React.FC<BaseballCapProps> = ({
   }, [capInstance, letter, letterColor, isModelLoaded, isFontLoaded]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "absolute",
-        top: 0,
-        left: 0,
-      }}
-    />
+    <>
+      <div
+        ref={containerRef}
+        style={{
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+          top: 0,
+          left: 0,
+        }}
+      />
+      {/* Hidden video element for Picture-in-Picture */}
+      <video
+        ref={videoRef}
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          opacity: 0,
+          pointerEvents: "none",
+        }}
+        muted
+        playsInline
+      />
+    </>
   );
 };
 
