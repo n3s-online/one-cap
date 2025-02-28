@@ -116,17 +116,15 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      {/* Mini Baseball Cap in top left */}
-      <div className="mini-cap-container">
-        {!isLoading && selectedCap && (
-          <MiniBaseballCap
-            color={selectedCap.color}
-            letter={selectedCap.letter}
-            letterColor={selectedCap.letterColor}
-            name={selectedCap.name}
-          />
-        )}
-      </div>
+      {/* Invisible Mini Baseball Cap overlay */}
+      {!isLoading && selectedCap && (
+        <MiniBaseballCap
+          color={selectedCap.color}
+          letter={selectedCap.letter}
+          letterColor={selectedCap.letterColor}
+          name={selectedCap.name}
+        />
+      )}
 
       {/* Feedback Button */}
       <FeedbackButton />

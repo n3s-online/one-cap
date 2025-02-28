@@ -1,4 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useCallback, // Import useCallback
+} from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
@@ -34,6 +39,46 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
   const colorAnimationRef = useRef<{ id: number } | null>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
 
+  // Define the desired PiP dimensions
+  const pipWidth = 320;
+  const pipHeight = 320;
+
+  // Use useCallback to memoize the openPip function
+  const openPip = useCallback(async () => {
+    if (!videoRef.current || !rendererRef.current) return;
+
+    try {
+      // Resize the renderer's canvas
+      rendererRef.current.setSize(pipWidth, pipHeight);
+
+      // Resize the video element
+      videoRef.current.width = pipWidth;
+      videoRef.current.height = pipHeight;
+
+      // Capture the stream (only if it doesn't exist)
+      if (!mediaStreamRef.current) {
+        const canvas = rendererRef.current.domElement;
+        mediaStreamRef.current = canvas.captureStream(30);
+        videoRef.current.srcObject = mediaStreamRef.current;
+        await videoRef.current.play();
+      }
+
+      // Request Picture-in-Picture
+      if (videoRef.current.requestPictureInPicture.length === 0) {
+        // No arguments supported
+        await videoRef.current.requestPictureInPicture();
+      } else {
+        // Arguments supported
+        await videoRef.current.requestPictureInPicture({
+          width: pipWidth,
+          height: pipHeight,
+        });
+      }
+    } catch (error) {
+      console.error("Failed to enter Picture-in-Picture mode:", error);
+    }
+  }, [pipWidth, pipHeight]); // Dependencies for useCallback
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -48,9 +93,10 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
 
     rendererRef.current = renderer;
 
-    renderer.setSize(200, 200);
+    // Set initial size to match the container (full page)
+    renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
-    renderer.setClearColor(0xf5f5f5, 0.3);
+    renderer.setClearColor(0xf5f5f5, 0); // Fully transparent background
     containerRef.current.appendChild(renderer.domElement);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -249,49 +295,8 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
           .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
       };
 
-      const complementaryColor = calculateComplementaryColor(color);
-      const targetColor = new THREE.Color(complementaryColor);
-
-      const currentColor = scene.background
-        ? (scene.background as THREE.Color).clone()
-        : new THREE.Color("#000000");
-
-      if (colorAnimationRef.current) {
-        cancelAnimationFrame(colorAnimationRef.current.id);
-        colorAnimationRef.current = null;
-      }
-
-      const duration = 800;
-      const startTime = performance.now();
-
-      const animateBackgroundColor = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-
-        const easeProgress = 1 - Math.pow(1 - progress, 3);
-
-        const r =
-          currentColor.r + (targetColor.r - currentColor.r) * easeProgress;
-        const g =
-          currentColor.g + (targetColor.g - currentColor.g) * easeProgress;
-        const b =
-          currentColor.b + (targetColor.b - currentColor.b) * easeProgress;
-
-        scene.background = new THREE.Color(r, g, b);
-
-        if (progress < 1) {
-          colorAnimationRef.current = {
-            id: requestAnimationFrame(animateBackgroundColor),
-          };
-        } else {
-          colorAnimationRef.current = null;
-        }
-      };
-
-      colorAnimationRef.current = {
-        id: requestAnimationFrame(animateBackgroundColor),
-      };
-
+      // For invisible mode, don't set background color
+      // Just set the cap color directly
       capRef.current.traverse((child) => {
         if ((child as THREE.Mesh).isMesh && child !== textMeshRef.current) {
           const newMaterial = new THREE.MeshStandardMaterial({
@@ -314,6 +319,15 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
       renderer.render(scene, camera);
     };
 
+    // Handle window resize
+    const handleResize = () => {
+      if (rendererRef.current) {
+        rendererRef.current.setSize(window.innerWidth, window.innerHeight);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
     loadModel();
     animate();
 
@@ -324,6 +338,8 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
     };
 
     return () => {
+      window.removeEventListener("resize", handleResize);
+
       if (colorAnimationRef.current) {
         cancelAnimationFrame(colorAnimationRef.current.id);
         colorAnimationRef.current = null;
@@ -352,26 +368,9 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
 
   useEffect(() => {
     const handleVisibilityChange = async () => {
-      if (!videoRef.current || !rendererRef.current) return;
-
       if (document.hidden && !isPipActive) {
-        try {
-          if (document.pictureInPictureEnabled) {
-            if (!mediaStreamRef.current) {
-              const canvas = rendererRef.current.domElement;
-              mediaStreamRef.current = canvas.captureStream(30);
-              videoRef.current.srcObject = mediaStreamRef.current;
-              await videoRef.current.play();
-            }
-
-            if (!document.pictureInPictureElement) {
-              await videoRef.current.requestPictureInPicture();
-              setIsPipActive(true);
-            }
-          }
-        } catch (error) {
-          console.error("Failed to enter Picture-in-Picture mode:", error);
-        }
+        await openPip(); // Call the openPip function
+        setIsPipActive(true);
       } else if (!document.hidden && isPipActive) {
         try {
           if (document.pictureInPictureElement) {
@@ -389,7 +388,7 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [isPipActive]);
+  }, [isPipActive, openPip]); // Add openPip to the dependency array
 
   useEffect(() => {
     if (isModelLoaded && window.miniCapFunctions) {
@@ -414,15 +413,14 @@ const MiniBaseballCap: React.FC<MiniBaseballCapProps> = ({
       <div
         ref={containerRef}
         style={{
-          width: "200px",
-          height: "200px",
-          position: "absolute",
-          top: "20px",
-          left: "20px",
+          width: "100vw",
+          height: "100vh",
+          position: "fixed",
+          top: 0,
+          left: 0,
           zIndex: 10,
-          borderRadius: "10px",
-          overflow: "hidden",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+          pointerEvents: "none", // Allow clicks to pass through
+          opacity: 0.01, // Almost invisible but still slightly visible
         }}
       />
       <video
@@ -445,7 +443,7 @@ declare global {
   interface Window {
     miniCapFunctions?: {
       setCapColor: (color: string) => void;
-      createText: (letter: string, color: string) => void;
+      createText: (letter: string) => void;
       createNameText: (name: string) => void;
     };
   }
