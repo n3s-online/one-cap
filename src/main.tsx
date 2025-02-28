@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import "./style.css";
 import BaseballCap from "./components/BaseballCap";
+import MiniBaseballCap from "./components/MiniBaseballCap";
 import DeleteCapButton from "./components/DeleteCapButton";
 import DeleteCapModal from "./components/DeleteCapModal";
 import AddCapButton from "./components/AddCapButton";
@@ -115,6 +116,18 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Mini Baseball Cap in top left */}
+      <div className="mini-cap-container">
+        {!isLoading && selectedCap && (
+          <MiniBaseballCap
+            color={selectedCap.color}
+            letter={selectedCap.letter}
+            letterColor={selectedCap.letterColor}
+            name={selectedCap.name}
+          />
+        )}
+      </div>
+
       {/* Feedback Button */}
       <FeedbackButton />
 
