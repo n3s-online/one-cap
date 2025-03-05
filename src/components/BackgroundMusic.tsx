@@ -35,7 +35,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   const [volume, setVolume] = useState(initialVolume);
   const [showInteractionMessage, setShowInteractionMessage] = useState(true);
   const [audioLoaded, setAudioLoaded] = useState(false);
-  const [showPlayPrompt, setShowPlayPrompt] = useState(false);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [playlist, setPlaylist] = useState<string[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -171,18 +170,8 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     // Store the audio element
     audioRef.current = audio;
 
-    // Show play prompt after a delay if music hasn't started
-    // Only show the prompt if user has interacted but music isn't playing
-    const promptTimer = setTimeout(() => {
-      if (!playStateRef.current && audioLoaded && userInteractedRef.current) {
-        setShowPlayPrompt(true);
-      }
-    }, 1000); // Reduced delay to 1 second
-
     return () => {
       // Clean up event listeners and timers
-      clearTimeout(promptTimer);
-
       if (audioRef.current) {
         audioRef.current.removeEventListener("canplaythrough", () => {});
         audioRef.current.removeEventListener("ended", handleSongEnd);
@@ -227,12 +216,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       userInteractedRef.current = true;
       setShowInteractionMessage(false);
 
-      // Remove the automatic play functionality
-      // Just show the play prompt if it's not already showing
-      if (!showPlayPrompt) {
-        setShowPlayPrompt(true);
-      }
-
       // Remove event listeners after first interaction
       window.removeEventListener("click", handleFirstInteraction);
       window.removeEventListener("touchstart", handleFirstInteraction);
@@ -247,7 +230,7 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       window.removeEventListener("click", handleFirstInteraction);
       window.removeEventListener("touchstart", handleFirstInteraction);
     };
-  }, [playlist, showPlayPrompt]);
+  }, [playlist]);
 
   // Handle toggle play/pause
   const togglePlay = (e: React.MouseEvent) => {
@@ -288,23 +271,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   const handleNextClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     playNextSong();
-  };
-
-  // Handle play prompt click
-  const handlePlayPromptClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
-    setShowPlayPrompt(false);
-
-    if (audioRef.current && !isPlaying) {
-      audioRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch((error) => {
-          console.error("Failed to play audio from prompt:", error);
-        });
-    }
   };
 
   // Play the next song in the playlist
@@ -352,13 +318,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
 
   return (
     <div className="music-player">
-      {showPlayPrompt && (
-        <div className="play-prompt" onClick={handlePlayPromptClick}>
-          <span className="play-icon">▶</span>
-          <span>Play Music</span>
-        </div>
-      )}
-
       <div className="music-controls">
         <div className="playlist-info">
           <span className="playlist-name">{getCurrentPlaylistName()}</span>
