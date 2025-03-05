@@ -172,11 +172,12 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     audioRef.current = audio;
 
     // Show play prompt after a delay if music hasn't started
+    // Only show the prompt if user has interacted but music isn't playing
     const promptTimer = setTimeout(() => {
-      if (!playStateRef.current && audioLoaded) {
+      if (!playStateRef.current && audioLoaded && userInteractedRef.current) {
         setShowPlayPrompt(true);
       }
-    }, 5000);
+    }, 1000); // Reduced delay to 1 second
 
     return () => {
       // Clean up event listeners and timers
@@ -226,17 +227,10 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       userInteractedRef.current = true;
       setShowInteractionMessage(false);
 
-      // Try to play audio if it's not already playing
-      if (audioRef.current && !isPlaying) {
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-            setShowPlayPrompt(false);
-          })
-          .catch((error) => {
-            console.error("Failed to play audio after interaction:", error);
-          });
+      // Remove the automatic play functionality
+      // Just show the play prompt if it's not already showing
+      if (!showPlayPrompt) {
+        setShowPlayPrompt(true);
       }
 
       // Remove event listeners after first interaction
@@ -253,7 +247,7 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       window.removeEventListener("click", handleFirstInteraction);
       window.removeEventListener("touchstart", handleFirstInteraction);
     };
-  }, [playlist, isPlaying]);
+  }, [playlist, showPlayPrompt]);
 
   // Handle toggle play/pause
   const togglePlay = (e: React.MouseEvent) => {
