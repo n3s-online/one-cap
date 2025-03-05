@@ -9,6 +9,7 @@ import DeleteCapModal from "./components/DeleteCapModal";
 import AddCapButton from "./components/AddCapButton";
 import AddCapForm from "./components/AddCapForm";
 import FeedbackButton from "./components/FeedbackButton";
+import BackgroundMusic from "./components/BackgroundMusic";
 import {
   capsAtom,
   getAllCapsAtom,
@@ -116,6 +117,9 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
+      {/* Background Music */}
+      <BackgroundMusic initialVolume={0.3} />
+
       {/* Invisible Mini Baseball Cap overlay */}
       {!isLoading && selectedCap && (
         <MiniBaseballCap
