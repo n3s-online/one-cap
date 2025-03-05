@@ -118,7 +118,7 @@ const App: React.FC = () => {
   return (
     <div className="app-container">
       {/* Background Music */}
-      <BackgroundMusic initialVolume={0.3} />
+      <BackgroundMusic initialVolume={0.25} />
 
       {/* Invisible Mini Baseball Cap overlay */}
       {!isLoading && selectedCap && (

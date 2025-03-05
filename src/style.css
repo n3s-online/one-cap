@@ -426,19 +426,34 @@ canvas {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-.music-toggle-btn {
+.music-toggle-btn,
+.music-control-btn {
   background: none;
   border: none;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   cursor: pointer;
   padding: 0;
-  margin-right: 8px;
-  transition: transform 0.2s ease;
+  margin: 0 6px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
-.music-toggle-btn:hover {
+.music-toggle-btn {
+  font-size: 1.5rem;
+}
+
+.music-toggle-btn:hover,
+.music-control-btn:hover {
   transform: scale(1.1);
+}
+
+.music-control-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.music-control-btn[disabled]:hover {
+  transform: none;
 }
 
 .volume-slider {
@@ -478,5 +493,30 @@ canvas {
 
   .volume-slider {
     width: 60px;
+  }
+
+  /* Adjust position for mobile to avoid overlapping with buttons */
+  .background-music-container {
+    bottom: 70px; /* Move up to avoid overlapping with bottom buttons */
+  }
+}
+
+/* Additional media query for very small screens */
+@media (max-width: 480px) {
+  .background-music-container {
+    bottom: 80px; /* Move up even more on very small screens */
+  }
+
+  .music-control-btn {
+    font-size: 1rem;
+    margin: 0 4px;
+  }
+
+  .music-toggle-btn {
+    font-size: 1.2rem;
+  }
+
+  .volume-slider {
+    width: 50px;
   }
 }
