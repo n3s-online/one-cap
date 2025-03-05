@@ -17,17 +17,38 @@ export interface CapsState {
 
 // Create a more robust volume atom with a specific key for localStorage
 export const volumeAtom = atomWithStorage<number>("baseball-cap-volume", 0.3, {
-  getItem: (key) => {
+  getItem: (key, initialValue) => {
     const storedValue = localStorage.getItem(key);
-    if (storedValue === null) return undefined;
+    if (storedValue === null) return initialValue;
     try {
-      return JSON.parse(storedValue);
+      const parsedValue = JSON.parse(storedValue);
+      // Validate that the parsed value is a valid number between 0 and 1
+      if (
+        typeof parsedValue !== "number" ||
+        isNaN(parsedValue) ||
+        !isFinite(parsedValue)
+      ) {
+        return initialValue; // Return initialValue if not a valid number
+      }
+      // Ensure volume is between 0 and 1
+      return Math.max(0, Math.min(1, parsedValue));
     } catch (e) {
-      return 0.3; // Default if parsing fails
+      return initialValue; // Default if parsing fails
     }
   },
   setItem: (key, value) => {
-    localStorage.setItem(key, JSON.stringify(value));
+    // Ensure we're storing a valid number
+    let safeValue = value;
+    if (
+      typeof safeValue !== "number" ||
+      isNaN(safeValue) ||
+      !isFinite(safeValue)
+    ) {
+      safeValue = 0.3; // Use default if not a valid number
+    }
+    // Ensure volume is between 0 and 1
+    safeValue = Math.max(0, Math.min(1, safeValue));
+    localStorage.setItem(key, JSON.stringify(safeValue));
   },
   removeItem: (key) => {
     localStorage.removeItem(key);

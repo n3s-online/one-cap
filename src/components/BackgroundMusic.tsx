@@ -124,8 +124,9 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     // Create a new audio element
     const audio = new Audio(playlist[currentSongIndex]);
 
-    // Set volume from atom without logging
-    audio.volume = volume;
+    // Set volume from atom with validation
+    const safeVolume = validateVolume(volume);
+    audio.volume = safeVolume;
 
     // Set up error handling
     audio.addEventListener("error", (e) => {
@@ -187,7 +188,9 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   // Handle volume changes separately
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      // Ensure we set a valid volume value
+      const safeVolume = validateVolume(volume);
+      audioRef.current.volume = safeVolume;
     }
   }, [volume]);
 
@@ -257,11 +260,13 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   // Handle volume change
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
+    // Validate volume before setting it
+    const safeVolume = validateVolume(newVolume);
+    setVolume(safeVolume);
 
     // Also directly set the audio volume to ensure it updates
     if (audioRef.current) {
-      audioRef.current.volume = newVolume;
+      audioRef.current.volume = safeVolume;
     }
   };
 
@@ -318,6 +323,16 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     // Ensure we have a playlist name, defaulting to "lofi" if not present
     const playlistName = selectedCap.playlist || "lofi";
     return playlistName.charAt(0).toUpperCase() + playlistName.slice(1);
+  };
+
+  // Helper function to validate volume
+  const validateVolume = (vol: any): number => {
+    // Check if volume is a valid number
+    if (typeof vol !== "number" || isNaN(vol) || !isFinite(vol)) {
+      return 0.3; // Default volume
+    }
+    // Ensure volume is between 0 and 1
+    return Math.max(0, Math.min(1, vol));
   };
 
   return (
