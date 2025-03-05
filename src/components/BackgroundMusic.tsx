@@ -49,7 +49,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     // Default to lofi playlist if no selected cap
     const defaultPlaylist = shuffleArray(PLAYLISTS.lofi);
     setPlaylist(defaultPlaylist);
-    console.log("Initialized default playlist:", defaultPlaylist);
   }, []);
 
   // Update playlist when selected cap changes
@@ -72,11 +71,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       // Reset song index
       setCurrentSongIndex(0);
 
-      console.log(
-        `Initialized randomized playlist for ${playlistName}:`,
-        randomizedPlaylist
-      );
-
       // If audio is already playing, load and play the first song from the new playlist
       if (isPlaying && audioRef.current) {
         isChangingSongRef.current = true;
@@ -88,11 +82,9 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
             audioRef.current
               .play()
               .then(() => {
-                console.log("New playlist song playing successfully");
                 isChangingSongRef.current = false;
               })
               .catch((error) => {
-                console.error("Failed to play song from new playlist:", error);
                 isChangingSongRef.current = false;
               });
           } else {
@@ -121,75 +113,63 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   useEffect(() => {
     if (playlist.length === 0) return;
 
-    console.log("Initializing audio player with playlist:", playlist);
+    // Remember the current play state before cleaning up
+    const wasPlaying = playStateRef.current;
 
-    // Create audio element if it doesn't exist
-    if (!audioRef.current) {
-      const audio = new Audio(playlist[currentSongIndex]);
-      audio.volume = volume;
-      audioRef.current = audio;
-
-      // Add event listeners to track audio state
-      audio.addEventListener("canplaythrough", () => {
-        console.log("Audio can play through");
-        setAudioLoaded(true);
-      });
-
-      audio.addEventListener("error", (e) => {
-        console.error("Audio error:", e);
-      });
-
-      // Handle song ending - play next song in playlist
-      const handleSongEnd = () => {
-        console.log("Song ended, playing next song");
-        playNextSong();
-      };
-
-      // Handle play/pause events to keep our state in sync with native audio events
-      const handlePlay = () => {
-        console.log("Audio play event triggered");
-        setIsPlaying(true); // Always update state when audio plays
-      };
-
-      const handlePause = () => {
-        console.log("Audio pause event triggered");
-        setIsPlaying(false); // Always update state when audio pauses
-      };
-
-      audio.addEventListener("ended", handleSongEnd);
-      audio.addEventListener("play", handlePlay);
-      audio.addEventListener("pause", handlePause);
-    } else {
-      // Update existing audio element with new song
-      audioRef.current.src = playlist[currentSongIndex];
-      audioRef.current.volume = volume;
-
-      // Re-add event listeners to ensure they're attached
-      const handleSongEnd = () => {
-        console.log("Song ended, playing next song");
-        playNextSong();
-      };
-
-      const handlePlay = () => {
-        console.log("Audio play event triggered");
-        setIsPlaying(true);
-      };
-
-      const handlePause = () => {
-        console.log("Audio pause event triggered");
-        setIsPlaying(false);
-      };
-
-      // Remove any existing listeners first to avoid duplicates
-      audioRef.current.removeEventListener("ended", handleSongEnd);
-      audioRef.current.removeEventListener("play", handlePlay);
-      audioRef.current.removeEventListener("pause", handlePause);
-
-      // Add listeners
-      audioRef.current.addEventListener("ended", handleSongEnd);
-      audioRef.current.addEventListener("play", handlePlay);
-      audioRef.current.addEventListener("pause", handlePause);
+    // Clean up any existing audio element
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
     }
+
+    // Create a new audio element
+    const audio = new Audio(playlist[currentSongIndex]);
+    audio.volume = volume;
+
+    // Set up error handling
+    audio.addEventListener("error", (e) => {
+      setIsPlaying(false);
+    });
+
+    // Add event listeners to track audio state
+    audio.addEventListener("canplaythrough", () => {
+      setAudioLoaded(true);
+
+      // If it was playing before, start playing the new song automatically
+      if (wasPlaying) {
+        audio
+          .play()
+          .then(() => {
+            // Playback resumed successfully
+          })
+          .catch((error) => {
+            console.error("Failed to resume playback:", error);
+          });
+      }
+    });
+
+    // Handle song ending - play next song in playlist
+    const handleSongEnd = () => {
+      playNextSong();
+    };
+
+    // Handle play/pause events to keep our state in sync with native audio events
+    const handlePlay = () => {
+      playStateRef.current = true;
+      setIsPlaying(true); // Always update state when audio plays
+    };
+
+    const handlePause = () => {
+      playStateRef.current = false;
+      setIsPlaying(false); // Always update state when audio pauses
+    };
+
+    audio.addEventListener("ended", handleSongEnd);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
+
+    // Store the audio element
+    audioRef.current = audio;
 
     // Show play prompt after a delay if music hasn't started
     const promptTimer = setTimeout(() => {
@@ -199,43 +179,25 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     }, 5000);
 
     return () => {
-      // Clean up
+      // Clean up event listeners and timers
       clearTimeout(promptTimer);
-    };
-  }, [playlist, volume]);
 
-  // Clean up audio element on unmount
-  useEffect(() => {
-    return () => {
       if (audioRef.current) {
-        // Define the event handlers to remove
-        const handleSongEnd = () => {
-          console.log("Song ended, playing next song");
-          playNextSong();
-        };
-
-        const handlePlay = () => {
-          console.log("Audio play event triggered");
-          setIsPlaying(true);
-        };
-
-        const handlePause = () => {
-          console.log("Audio pause event triggered");
-          setIsPlaying(false);
-        };
-
-        // Remove event listeners
+        audioRef.current.removeEventListener("canplaythrough", () => {});
         audioRef.current.removeEventListener("ended", handleSongEnd);
         audioRef.current.removeEventListener("play", handlePlay);
         audioRef.current.removeEventListener("pause", handlePause);
-
-        // Pause and clean up audio
-        audioRef.current.pause();
-        audioRef.current.src = "";
-        audioRef.current = null;
+        audioRef.current.removeEventListener("error", () => {});
       }
     };
-  }, []);
+  }, [playlist, currentSongIndex]); // Remove volume from dependencies
+
+  // Handle volume changes separately
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   // Update playStateRef when isPlaying changes
   useEffect(() => {
@@ -254,13 +216,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     }
   }, [isPlaying]);
 
-  // Update volume when it changes
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
-  }, [volume]);
-
   // Handle user interaction for autoplay
   useEffect(() => {
     if (playlist.length === 0) return;
@@ -268,7 +223,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     const handleFirstInteraction = (e: MouseEvent | TouchEvent) => {
       if (userInteractedRef.current) return;
 
-      console.log("First user interaction detected");
       userInteractedRef.current = true;
       setShowInteractionMessage(false);
 
@@ -277,7 +231,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
         audioRef.current
           .play()
           .then(() => {
-            console.log("Audio started playing after user interaction");
             setIsPlaying(true);
             setShowPlayPrompt(false);
           })
@@ -302,7 +255,7 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     };
   }, [playlist, isPlaying]);
 
-  // Toggle play/pause
+  // Handle toggle play/pause
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
 
@@ -310,18 +263,14 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
 
     if (isPlaying) {
       audioRef.current.pause();
-      setIsPlaying(false); // Explicitly update the state
     } else {
       audioRef.current
         .play()
         .then(() => {
-          console.log("Audio started playing");
-          setIsPlaying(true); // Explicitly update the state
-          setShowPlayPrompt(false);
+          // Play successful
         })
         .catch((error) => {
-          console.error("Failed to play audio:", error);
-          setIsPlaying(false); // Ensure state is consistent on error
+          console.error("Play failed:", error);
         });
     }
   };
@@ -330,6 +279,9 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
+
+    // We don't need to directly set the volume here anymore
+    // as the useEffect with [volume] dependency will handle it
   };
 
   // Handle previous button click
@@ -353,7 +305,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       audioRef.current
         .play()
         .then(() => {
-          console.log("Audio started playing from prompt");
           setIsPlaying(true);
         })
         .catch((error) => {
@@ -372,41 +323,11 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     // Calculate next song index (loop back to beginning if at end)
     const nextIndex = (currentSongIndex + 1) % playlist.length;
 
-    console.log(`Changing to next song: ${nextIndex} of ${playlist.length}`);
-
-    // If currently playing, pause first to avoid AbortError
-    if (audioRef.current && isPlaying) {
-      audioRef.current.pause();
-    }
-
-    // Update current song index
+    // Update current song index - this will trigger the useEffect that manages the audio element
     setCurrentSongIndex(nextIndex);
 
-    // Load and play the next song with a small delay to ensure proper state update
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.src = playlist[nextIndex];
-
-        if (isPlaying) {
-          audioRef.current
-            .play()
-            .then(() => {
-              console.log("Next song playing successfully");
-              setIsPlaying(true); // Ensure state is updated
-              isChangingSongRef.current = false;
-            })
-            .catch((error) => {
-              console.error("Failed to play next song:", error);
-              setIsPlaying(false); // Update state on error
-              isChangingSongRef.current = false;
-            });
-        } else {
-          isChangingSongRef.current = false;
-        }
-      } else {
-        isChangingSongRef.current = false;
-      }
-    }, 50);
+    // Reset the changing flag immediately to allow auto-play in canplaythrough
+    isChangingSongRef.current = false;
   };
 
   // Play the previous song in the playlist
@@ -420,43 +341,11 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     const prevIndex =
       (currentSongIndex - 1 + playlist.length) % playlist.length;
 
-    console.log(
-      `Changing to previous song: ${prevIndex} of ${playlist.length}`
-    );
-
-    // If currently playing, pause first to avoid AbortError
-    if (audioRef.current && isPlaying) {
-      audioRef.current.pause();
-    }
-
-    // Update current song index
+    // Update current song index - this will trigger the useEffect that manages the audio element
     setCurrentSongIndex(prevIndex);
 
-    // Load and play the previous song with a small delay to ensure proper state update
-    setTimeout(() => {
-      if (audioRef.current) {
-        audioRef.current.src = playlist[prevIndex];
-
-        if (isPlaying) {
-          audioRef.current
-            .play()
-            .then(() => {
-              console.log("Previous song playing successfully");
-              setIsPlaying(true); // Ensure state is updated
-              isChangingSongRef.current = false;
-            })
-            .catch((error) => {
-              console.error("Failed to play previous song:", error);
-              setIsPlaying(false); // Update state on error
-              isChangingSongRef.current = false;
-            });
-        } else {
-          isChangingSongRef.current = false;
-        }
-      } else {
-        isChangingSongRef.current = false;
-      }
-    }, 50);
+    // Reset the changing flag immediately to allow auto-play in canplaythrough
+    isChangingSongRef.current = false;
   };
 
   // Get current playlist name for display
