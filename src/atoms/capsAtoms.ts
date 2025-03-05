@@ -7,6 +7,7 @@ export interface Cap {
   letter: string;
   color: string;
   letterColor: string;
+  playlist: string;
 }
 
 export interface CapsState {
@@ -23,6 +24,7 @@ const initialState: CapsState = {
       letter: "D",
       color: "#2E4A9E",
       letterColor: "white",
+      playlist: "lofi",
     },
     "2": {
       id: "2",
@@ -30,6 +32,7 @@ const initialState: CapsState = {
       letter: "M",
       color: "#D6811F",
       letterColor: "white",
+      playlist: "lofi",
     },
   },
 };
@@ -69,10 +72,30 @@ export const updateCapAtom = atom(null, (get, set, updatedCap: Cap) => {
 
 export const getSelectedCapAtom = atom((get) => {
   const currentState = get(capsAtom);
-  return currentState.caps[currentState.selectedCapId];
+  const selectedCap = currentState.caps[currentState.selectedCapId];
+
+  // Ensure the selected cap has a playlist property, defaulting to "lofi" if not
+  if (selectedCap && !selectedCap.playlist) {
+    return {
+      ...selectedCap,
+      playlist: "lofi",
+    };
+  }
+
+  return selectedCap;
 });
 
 export const getAllCapsAtom = atom((get) => {
   const currentState = get(capsAtom);
-  return Object.values(currentState.caps);
+
+  // Ensure all caps have a playlist property, defaulting to "lofi" if not
+  return Object.values(currentState.caps).map((cap) => {
+    if (!cap.playlist) {
+      return {
+        ...cap,
+        playlist: "lofi",
+      };
+    }
+    return cap;
+  });
 });

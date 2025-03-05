@@ -12,6 +12,7 @@ const capFormSchema = z.object({
   letter: z.string().length(1, "Letter must be exactly 1 character"),
   color: z.string().min(1, "Cap color is required"),
   letterColor: z.string().min(1, "Letter color is required"),
+  playlist: z.string().min(1, "Playlist is required"),
 });
 
 // Infer the type from the schema
@@ -33,6 +34,7 @@ const AddCapForm: React.FC<AddCapFormProps> = ({
     letter: "",
     color: "#000000",
     letterColor: "#ffffff",
+    playlist: "lofi",
   },
 }) => {
   const {
@@ -110,6 +112,16 @@ const AddCapForm: React.FC<AddCapFormProps> = ({
             <input type="color" id="letterColor" {...register("letterColor")} />
             {errors.letterColor && (
               <p className="error-message">{errors.letterColor.message}</p>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="playlist">Playlist:</label>
+            <select id="playlist" {...register("playlist")}>
+              <option value="lofi">Lofi</option>
+            </select>
+            {errors.playlist && (
+              <p className="error-message">{errors.playlist.message}</p>
             )}
           </div>
 

@@ -59,14 +59,16 @@ const App: React.FC = () => {
     letter: string;
     color: string;
     letterColor: string;
+    playlist?: string;
   }) => {
     // Generate a unique ID
     const newId = Date.now().toString();
 
-    // Add the new cap
+    // Add the new cap, ensuring playlist defaults to "lofi" if not provided
     addCap({
       id: newId,
       ...capData,
+      playlist: capData.playlist || "lofi",
     });
 
     // Hide the form
@@ -116,11 +118,11 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      {/* Background Music */}
+      {/* Background Music - moved outside the inner container for better positioning */}
       <BackgroundMusic initialVolume={0.25} />
 
       {/* Main content */}
-      <div className="app-container">
+      <div className="app-content">
         {/* Cap name text */}
         {!isLoading && selectedCap && (
           <div className="cap-title-text" style={{ color: selectedCap.color }}>
