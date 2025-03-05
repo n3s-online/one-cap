@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useAtomValue } from "jotai";
-import { getSelectedCapAtom } from "../atoms/capsAtoms";
+import { useAtomValue, useAtom } from "jotai";
+import { getSelectedCapAtom, volumeAtom } from "../atoms/capsAtoms";
 
 interface BackgroundMusicProps {
   initialVolume?: number;
@@ -32,7 +32,7 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
 }) => {
   const selectedCap = useAtomValue(getSelectedCapAtom);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(initialVolume);
+  const [volume, setVolume] = useAtom(volumeAtom);
   const [showInteractionMessage, setShowInteractionMessage] = useState(true);
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
@@ -123,6 +123,8 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
 
     // Create a new audio element
     const audio = new Audio(playlist[currentSongIndex]);
+
+    // Set volume from atom without logging
     audio.volume = volume;
 
     // Set up error handling
@@ -257,8 +259,10 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
 
-    // We don't need to directly set the volume here anymore
-    // as the useEffect with [volume] dependency will handle it
+    // Also directly set the audio volume to ensure it updates
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
   };
 
   // Handle previous button click

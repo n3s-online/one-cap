@@ -15,6 +15,25 @@ export interface CapsState {
   caps: Record<string, Cap>;
 }
 
+// Create a more robust volume atom with a specific key for localStorage
+export const volumeAtom = atomWithStorage<number>("baseball-cap-volume", 0.3, {
+  getItem: (key) => {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue === null) return undefined;
+    try {
+      return JSON.parse(storedValue);
+    } catch (e) {
+      return 0.3; // Default if parsing fails
+    }
+  },
+  setItem: (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  },
+  removeItem: (key) => {
+    localStorage.removeItem(key);
+  },
+});
+
 const initialState: CapsState = {
   selectedCapId: "1",
   caps: {
