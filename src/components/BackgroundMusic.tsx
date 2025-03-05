@@ -88,7 +88,24 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       playNextSong();
     };
 
+    // Handle play/pause events to keep our state in sync with native audio events
+    const handlePlay = () => {
+      console.log("Audio play event triggered");
+      if (!isPlaying && !isChangingSongRef.current) {
+        setIsPlaying(true);
+      }
+    };
+
+    const handlePause = () => {
+      console.log("Audio pause event triggered");
+      if (isPlaying && !isChangingSongRef.current) {
+        setIsPlaying(false);
+      }
+    };
+
     audio.addEventListener("ended", handleSongEnd);
+    audio.addEventListener("play", handlePlay);
+    audio.addEventListener("pause", handlePause);
 
     // Show play prompt after a delay if music hasn't started
     const promptTimer = setTimeout(() => {
@@ -103,14 +120,28 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.removeEventListener("ended", handleSongEnd);
+        audioRef.current.removeEventListener("play", handlePlay);
+        audioRef.current.removeEventListener("pause", handlePause);
         audioRef.current = null;
       }
     };
-  }, [playlist, currentSongIndex]);
+  }, [playlist, currentSongIndex, isPlaying]);
 
   // Update playStateRef when isPlaying changes
   useEffect(() => {
     playStateRef.current = isPlaying;
+
+    // Ensure audio element's playing state matches our state
+    if (audioRef.current) {
+      if (isPlaying && audioRef.current.paused) {
+        audioRef.current.play().catch((error) => {
+          console.error("Failed to sync play state:", error);
+          setIsPlaying(false); // Revert state if play fails
+        });
+      } else if (!isPlaying && !audioRef.current.paused) {
+        audioRef.current.pause();
+      }
+    }
   }, [isPlaying]);
 
   // Play the next song in the playlist
@@ -263,22 +294,13 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
 
     if (isPlaying) {
       // If currently playing, pause the audio
-      audioRef.current.pause();
       setIsPlaying(false);
     } else {
       // If currently paused, play the audio
       console.log("Attempting to play audio from button click");
-      audioRef.current
-        .play()
-        .then(() => {
-          console.log("Audio playing successfully from button");
-          setIsPlaying(true);
-          setShowInteractionMessage(false);
-          setShowPlayPrompt(false);
-        })
-        .catch((error) => {
-          console.error("Audio playback failed from button:", error);
-        });
+      setIsPlaying(true);
+      setShowInteractionMessage(false);
+      setShowPlayPrompt(false);
     }
   };
 

@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import "./style.css";
 import BaseballCap from "./components/BaseballCap";
-import MiniBaseballCap from "./components/MiniBaseballCap";
 import DeleteCapButton from "./components/DeleteCapButton";
 import DeleteCapModal from "./components/DeleteCapModal";
 import AddCapButton from "./components/AddCapButton";
@@ -120,89 +119,82 @@ const App: React.FC = () => {
       {/* Background Music */}
       <BackgroundMusic initialVolume={0.25} />
 
-      {/* Invisible Mini Baseball Cap overlay */}
-      {!isLoading && selectedCap && (
-        <MiniBaseballCap
-          color={selectedCap.color}
-          letter={selectedCap.letter}
-          letterColor={selectedCap.letterColor}
-          name={selectedCap.name}
-        />
-      )}
-
-      {/* Feedback Button */}
-      <FeedbackButton />
-
-      {/* Cap name text */}
-      {!isLoading && selectedCap && (
-        <div className="cap-title-text" style={{ color: selectedCap.color }}>
-          right now i am wearing my{" "}
-          <span className="cap-name-highlight">{selectedCap.name}</span> cap
-        </div>
-      )}
-
-      <div className="cap-display">
+      {/* Main content */}
+      <div className="app-container">
+        {/* Cap name text */}
         {!isLoading && selectedCap && (
-          <BaseballCap
-            color={selectedCap.color}
-            letter={selectedCap.letter}
-            letterColor={selectedCap.letterColor}
-          />
+          <div className="cap-title-text" style={{ color: selectedCap.color }}>
+            right now i am wearing my{" "}
+            <span className="cap-name-highlight">{selectedCap.name}</span> cap
+          </div>
         )}
-      </div>
 
-      <div className="caps-grid">
-        {allCaps.map((cap) => (
-          <button
-            key={cap.id}
-            className={`cap-button ${
-              cap.id === capsState.selectedCapId ? "selected" : ""
-            }`}
-            onClick={() => handleCapSelect(cap.id)}
-            style={{ backgroundColor: cap.color }}
+        {/* Feedback Button */}
+        <FeedbackButton />
+
+        <div className="cap-display">
+          {!isLoading && selectedCap && (
+            <BaseballCap
+              color={selectedCap.color}
+              letter={selectedCap.letter}
+              letterColor={selectedCap.letterColor}
+            />
+          )}
+        </div>
+
+        <div className="caps-grid">
+          {allCaps.map((cap) => (
+            <button
+              key={cap.id}
+              className={`cap-button ${
+                cap.id === capsState.selectedCapId ? "selected" : ""
+              }`}
+              onClick={() => handleCapSelect(cap.id)}
+              style={{ backgroundColor: cap.color }}
+            >
+              <span className="cap-letter" style={{ color: cap.letterColor }}>
+                {cap.letter}
+              </span>
+              <span className="cap-name">{cap.name}</span>
+              {/* Only show delete button on selected cap and when there's more than one cap */}
+              {cap.id === capsState.selectedCapId && !isLastCap && (
+                <DeleteCapButton
+                  capId={cap.id}
+                  onDeleteClick={handleDeleteClick}
+                />
+              )}
+            </button>
+          ))}
+
+          {/* Add new cap button */}
+          <AddCapButton onClick={handleAddCapClick} />
+
+          {/* More Projects button styled like a cap button */}
+          <a
+            href="https://willness.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cap-button more-projects-cap"
           >
-            <span className="cap-letter" style={{ color: cap.letterColor }}>
-              {cap.letter}
-            </span>
-            <span className="cap-name">{cap.name}</span>
-            {/* Only show delete button on selected cap and when there's more than one cap */}
-            {cap.id === capsState.selectedCapId && !isLastCap && (
-              <DeleteCapButton
-                capId={cap.id}
-                onDeleteClick={handleDeleteClick}
-              />
-            )}
-          </button>
-        ))}
+            <span className="cap-letter">👨‍💻</span>
+            <span className="cap-name">More Projects</span>
+          </a>
+        </div>
 
-        {/* Add new cap button */}
-        <AddCapButton onClick={handleAddCapClick} />
+        {/* New Cap Form */}
+        <AddCapForm
+          isOpen={showForm}
+          onCancel={handleFormCancel}
+          onSubmit={handleFormSubmit}
+        />
 
-        {/* More Projects button styled like a cap button */}
-        <a
-          href="https://willness.dev"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cap-button more-projects-cap"
-        >
-          <span className="cap-letter">👨‍💻</span>
-          <span className="cap-name">More Projects</span>
-        </a>
+        {/* Delete Confirmation Dialog */}
+        <DeleteCapModal
+          isOpen={showDeleteConfirm !== null}
+          onCancel={handleDeleteCancel}
+          onConfirm={handleDeleteConfirm}
+        />
       </div>
-
-      {/* New Cap Form */}
-      <AddCapForm
-        isOpen={showForm}
-        onCancel={handleFormCancel}
-        onSubmit={handleFormSubmit}
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteCapModal
-        isOpen={showDeleteConfirm !== null}
-        onCancel={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-      />
     </div>
   );
 };
