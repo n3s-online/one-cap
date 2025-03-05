@@ -13,6 +13,7 @@ const PLAYLISTS = {
     "./audio/lofi/good-night-lofi-cozy-chill-music-160166.mp3",
     "./audio/lofi/lofi-piano-beat-305563.mp3",
   ],
+  techno: ["./audio/techno/techno-1.mp3", "./audio/techno/techno-2.mp3"],
   // Add more playlists here in the future
 };
 

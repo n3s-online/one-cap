@@ -32,7 +32,7 @@ const initialState: CapsState = {
       letter: "M",
       color: "#D6811F",
       letterColor: "white",
-      playlist: "lofi",
+      playlist: "techno",
     },
   },
 };
