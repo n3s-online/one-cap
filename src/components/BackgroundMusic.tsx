@@ -33,7 +33,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
   const [showPlayPrompt, setShowPlayPrompt] = useState(false);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [playlist, setPlaylist] = useState<string[]>([]);
-  const [currentSongTitle, setCurrentSongTitle] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playStateRef = useRef(false); // Reference to track play state across effects
   const userInteractedRef = useRef(false); // Track if user has already interacted
@@ -48,7 +47,7 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
     console.log("Initialized randomized playlist:", randomizedPlaylist);
   }, []);
 
-  // Extract song title from file path
+  // Extract song title from file path - kept for utility but not used for display
   const getSongTitle = (path: string): string => {
     // Extract filename without extension
     const filename = path.split("/").pop() || "";
@@ -357,10 +356,6 @@ const BackgroundMusic: React.FC<BackgroundMusicProps> = ({
           aria-label="Volume control"
         />
       </div>
-
-      {isPlaying && (
-        <div className="now-playing">Now playing: {currentSongTitle}</div>
-      )}
     </div>
   );
 };
